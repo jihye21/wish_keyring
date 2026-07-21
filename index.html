@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Wish Keyring</title>
+    
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app-container">
+    <div id="header-top">
+        <input type="text" id ="current-keyring-title"
+        oninput="updateBodyData()">
+        <button onclick="openStickerMenu()">☰</button>
+    </div>
+
+    <div id="goal-container">
+        <div id="goal-text">
+            <span id="current-amount">0</span> 원 /
+            <input type="number" 
+            id="goalAmountInput" 
+            value="10000" 
+            onchange="updateGoal()"> 원        
+            <div id="progress-bar"><div id="progress-fill"></div></div>
+        </div>
+    </div>
+
+    <div id="sticker-menu-modal" class="modal" style="display:none;">
+        <div class="modal-menu">
+            <h3>sticker board</h3>
+
+            <div class="create-keyring-box">
+                <input type="text" id="newKeyringTitle" placeholder="새 키링 이름">
+                <input type="number" id="newKeyringGoal" placeholder="목표 금액">
+                <button onclick="createNewKeyring()">새 키링 만들기</button>
+            </div>
+
+            <div id="keyring-grid" class="sticker-board">
+            </div>
+
+            <button onclick="closeStickerMenu()" class="close-btn">닫기</button>
+        </div>
+    </div>
+
+   
+    <div id="keyring-box">
+        <canvas id="world"></canvas>
+    </div>
+
+    <div class="input-container">
+        <div class="input-group">
+            <input type="text" id="itemName" placeholder="이름">
+            <input type="number" id="itemPrice" placeholder="금액">
+            <input type="text" id="emojiInput" placeholder="이모티콘" maxlength="2">
+            <button onclick="addEmoji()">추가</button>
+        </div>
+    </div>
+
+    <!-- 정보 보기 모달 -->
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <p>이름: <input type="text" id="modalNameInput" onchange="updateBodyData()">
+            금액: <input type="text" id="modalPriceInput" onchange="updateBodyData()"></p>
+            <button onclick="deleteEmoji()">삭제하기</button>
+            <button onclick="closeModal()">닫기</button>
+        </div>
+    </div>
+</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>    
+    <script src="script.js"></script>
+</body>
+</html>
