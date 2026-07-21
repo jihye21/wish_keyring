@@ -98,7 +98,7 @@ function addEmoji() {
 
     const currentKeyring = appData.keyrings.find(k => k.id === appData.currentKeyringId);
     if(currentKeyring) {
-        currentKeyring.items.push({ name, price, emoji });
+        currentKeyring.items.push({ name, price, emoji});
         saveAllData();
     }
 
@@ -109,20 +109,58 @@ function addEmoji() {
 
 //이모티콘 추가하기
 function createEmojiBody(name, price, emoji) {
-    const body = Bodies.circle(160, 160, 25, {
+    const isImage = emoji.startsWith('http://')  ||
+                    emoji.startsWith('https://') ||
+                    emoji.startsWith('data:image/');
+
+    const x = Math.random() * 200 + 100;
+    const y = -50;
+    const radius = 25;
+
+    const bodyOptions = {
         restitution: 0.5,
         friction: 0.1,
         isSensor: false,
         bullet: true,
-        render: { 
-            sprite: { 
-                texture: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='40'>${emoji}</text></svg>` 
-            } 
-        }
-    });
+        render: { }
+    };
 
-    body.myData = { name, price, emoji };
-    Composite.add(engine.world, body);
+    if(isImage) {
+        const img = new Image();
+        
+        img.onload = function() {
+            const targetSize = 50;
+            const maxDimension = Math.max(img.width, img.height);
+            let scale = 0.1;
+
+            if (maxDimension > 0) {
+                scale = targetSize / maxDimension;
+            }
+
+            bodyOptions.render.sprite = {
+                texture: emoji,
+                xScale: scale,
+                yScale: scale
+            };
+
+            const body = Bodies.circle(x, y, radius, bodyOptions);
+            body.myData = { name, price, emoji };
+            Composite.add(engine.world, body);
+        };
+
+        img.src = emoji;
+    } else {
+        bodyOptions.render.sprite = {
+            texture: `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80'><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='40'>${emoji}</text></svg>` 
+            ,
+            xScale: 1,
+            yScale: 1
+        };
+
+        const body = Bodies.circle(x, y, 25, bodyOptions);
+        body.myData = { name, price, emoji };
+        Composite.add(engine.world, body);
+    }
 }
 
 function updateGoal() {
@@ -165,7 +203,7 @@ function closeStickerMenu(){
 
 function renderStickerBoard() {
     const grid = document.getElementById('keyring-grid');
-    grid.innerHTML  = '';
+    grid.innerHTML = '';
     
     appData.keyrings.forEach(keyring => {
         const isCurrent = keyring.id === appData.currentKeyringId;
@@ -173,14 +211,23 @@ function renderStickerBoard() {
         const card = document.createElement('div');
         card.className = `sticker-card ${isCurrent ? 'active' : ''}`;
 
-        const emojisPreview = keyring.items.map(i => i.emoji).join(' ');
+        const emojisPreview = keyring.items.map(i => {
+            const val = i.emoji;
+            const isImg = val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:image/');
+            
+            if (isImg) {
+                return `<img src="${val}" style="width: 24px; height: 24px; object-fit: cover; border-radius: 50%; vertical-align: middle; margin: 0 2px;">`;
+            } else {
+                return `<span style="font-size: 18px; margin: 0 2px;">${val}</span>`;
+            }
+        }).join('');
 
         card.innerHTML = `
             <button class="delete-keyring-btn" onclick="deleteKeyring('${keyring.id}', event)">×</button>
 
             <h4>${keyring.title}</h4>
             <p>목표: ${keyring.goalAmount.toLocaleString()}원</p>
-            <div class="sticker-preview">${emojisPreview || ' '}</div>
+            <div class="sticker-preview" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; min-height: 30px; align-items: center;">${emojisPreview || ' '}</div>
             <button onclick="switchKeyring('${keyring.id}')">${isCurrent ? '사용 중' : '불러오기'}</button>
         `;
         grid.appendChild(card);
@@ -532,3 +579,26 @@ document.addEventListener('mousemove', (e) => {
 
 
 });
+
+function handleImagePaste(event) {
+    const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+    
+    for (let index in items) {
+        const item = items[index];
+        
+        if (item.kind === 'file' && item.type.indexOf('image/') !== -1) {
+            const blob = item.getAsFile();
+            const reader = new FileReader();
+            
+            reader.onload = function (e) {
+                const base64Data = e.target.result;
+                document.getElementById('emojiInput').value = base64Data;
+            };
+            
+            reader.readAsDataURL(blob);
+            
+            event.preventDefault();
+            break;
+        }
+    }
+}

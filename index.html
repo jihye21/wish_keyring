@@ -53,7 +53,8 @@
         <div class="input-group">
             <input type="text" id="itemName" placeholder="이름">
             <input type="number" id="itemPrice" placeholder="금액">
-            <input type="text" id="emojiInput" placeholder="이모티콘" maxlength="2">
+            <input type="text" id="emojiInput" placeholder="이모티콘" maxlength="500"
+            onpaste="handleImagePaste(event)">
             <button onclick="addEmoji()">추가</button>
         </div>
     </div>
