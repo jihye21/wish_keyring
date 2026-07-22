@@ -18,6 +18,35 @@ const render = Render.create({
     }
 });
 
+const designs = [
+    {
+        id: "glass",
+        name: "Glass"
+    },
+    {
+        id: "pastel",
+        name: "Pastel"
+    },
+    {
+        id: "metal",
+        name: "Metal"
+    },
+    {
+        id:"wood",
+        name: "wood"
+    },
+    {
+        id:"neon",
+        name: "Neon"
+    }
+];
+
+let keyringRotation = {
+    x:0,
+    y:0,
+    scale:1
+};
+
 let appData = {
     currentKeyringId: null,
     keyrings: []
@@ -91,14 +120,15 @@ function addEmoji() {
         return;
     }
 
-    createEmojiBody(name, price, emoji);
+    const itemId = 'item_' + crypto.randomUUID();
+    createEmojiBody(name, price, emoji, itemId);
     
     totalAmount += price;
     updateGoal();
 
     const currentKeyring = appData.keyrings.find(k => k.id === appData.currentKeyringId);
     if(currentKeyring) {
-        currentKeyring.items.push({ name, price, emoji});
+        currentKeyring.items.push({ id: itemId, name, price, emoji});
         saveAllData();
     }
 
@@ -108,7 +138,7 @@ function addEmoji() {
 }
 
 //이모티콘 추가하기
-function createEmojiBody(name, price, emoji) {
+function createEmojiBody(name, price, emoji, itemId) {
     const isImage = emoji.startsWith('http://')  ||
                     emoji.startsWith('https://') ||
                     emoji.startsWith('data:image/');
@@ -144,7 +174,7 @@ function createEmojiBody(name, price, emoji) {
             };
 
             const body = Bodies.circle(x, y, radius, bodyOptions);
-            body.myData = { name, price, emoji };
+            body.myData = { id: itemId, name, price, emoji };
             Composite.add(engine.world, body);
         };
 
@@ -158,14 +188,19 @@ function createEmojiBody(name, price, emoji) {
         };
 
         const body = Bodies.circle(x, y, 25, bodyOptions);
-        body.myData = { name, price, emoji };
+        body.myData = { id: itemId, name, price, emoji };
         Composite.add(engine.world, body);
     }
 }
 
 function updateGoal() {
-    const goalAmount = parseInt(document.getElementById('goalAmountInput').value) || 10000;
+    let goalAmount = parseInt(document.getElementById('goalAmountInput').value) || 10000;
     
+    if (goalAmount < totalAmount) {
+        goalAmount = totalAmount;
+        document.getElementById('goalAmountInput').value = totalAmount;
+    }
+
     document.getElementById('current-amount').innerText = totalAmount;
     
     const percent = Math.min((totalAmount / goalAmount) * 100, 100);
@@ -190,6 +225,84 @@ function saveAllData() {
     localStorage.setItem('wishKeyringAppData', JSON.stringify(appData));
 }
 
+//디자인 메뉴
+let editingDesignKeyringId = null;
+
+function openDesignMenu(keyringId){
+    editingDesignKeyringId = keyringId;
+
+    renderDesignMenu();
+    document.getElementById("design-menu-modal").style.display="flex";
+}
+
+function closeDesignMenu(){
+    document.getElementById("design-menu-modal").style.display="none";
+}
+
+function renderDesignMenu(){
+
+    const grid=document.getElementById("design-grid");
+
+    grid.innerHTML="";
+
+    designs.forEach(design=>{
+
+        const card=document.createElement("div");
+
+        card.className="design-card";
+
+        card.innerHTML=`
+            <div class="design-preview ${design.id}"></div>
+            <p>${design.name}</p>
+        `;
+
+        card.onclick=()=>{
+
+            const keyring = appData.keyrings.find(
+                k => k.id === editingDesignKeyringId
+            );
+
+            keyring.design = design.id;
+
+            if (keyring.id === appData.currentKeyringId) {
+                applyKeyringDesign();
+            }
+            console.log(appData.keyrings);
+
+            saveAllData();
+            closeDesignMenu();
+            renderStickerBoard();
+        };
+
+        grid.appendChild(card);
+
+    });
+
+}
+
+//디자인 적용 함수
+function getCurrentKeyring() {
+    return appData.keyrings.find(
+        keyring => keyring.id === appData.currentKeyringId
+    );
+}
+
+function applyKeyringDesign(){
+    const keyring = getCurrentKeyring();
+
+    const box = document.getElementById("keyring-box");
+
+    box.className = "";
+    box.classList.add(keyring?.design || "glass");
+
+    box.style.transform = `
+        perspective(1000px)
+        rotateX(${keyringRotation.x}deg)
+        rotateY(${keyringRotation.y}deg)
+        scale(${keyringRotation.scale})
+    `;
+}
+
 //스티커판 메뉴
 function openStickerMenu(){
     renderStickerBoard();
@@ -211,7 +324,11 @@ function renderStickerBoard() {
         const card = document.createElement('div');
         card.className = `sticker-card ${isCurrent ? 'active' : ''}`;
 
-        const emojisPreview = keyring.items.map(i => {
+        const items = keyring.items || [];
+        
+        const visibleItems = items.slice(0, 4);
+
+        let emojisPreview = visibleItems.map(i => {
             const val = i.emoji;
             const isImg = val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:image/');
             
@@ -222,13 +339,22 @@ function renderStickerBoard() {
             }
         }).join('');
 
+        if(items.length > 4){
+            emojisPreview += `<span style="font-size: 12px; color: #888; margin-left: 2px;">+${items.length - 4}</span>`;        }
+
         card.innerHTML = `
             <button class="delete-keyring-btn" onclick="deleteKeyring('${keyring.id}', event)">×</button>
 
             <h4>${keyring.title}</h4>
             <p>목표: ${keyring.goalAmount.toLocaleString()}원</p>
-            <div class="sticker-preview" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; min-height: 30px; align-items: center;">${emojisPreview || ' '}</div>
-            <button onclick="switchKeyring('${keyring.id}')">${isCurrent ? '사용 중' : '불러오기'}</button>
+            <div class="sticker-preview">${emojisPreview || ' '}</div>
+
+            <div class="keyring-actions">
+                <button onclick="switchKeyring('${keyring.id}')">${isCurrent ? '사용 중' : '불러오기'}</button>
+                <button onclick="openDesignMenu('${keyring.id}')">
+                🎨
+                </button>
+            </div>
         `;
         grid.appendChild(card);
     });
@@ -251,6 +377,7 @@ function createNewKeyring() {
         id: 'keyring_' + crypto.randomUUID(),
         title: title,
         goalAmount: goalAmount,
+        design: "glass",
         items: []
     };
 
@@ -268,6 +395,8 @@ function createNewKeyring() {
 
 function switchKeyring(id){
     appData.currentKeyringId = id;
+    
+    applyKeyringDesign();
     saveAllData();
 
     const keyring = appData.keyrings.find(k => k.id === id);
@@ -290,6 +419,7 @@ function loadAllData() {
             id: defaultId,
             title: 'Wish Keyring',
             goalAmount: 10000,
+            design: "glass",
             items: []
         }];
         appData.currentKeyringId = defaultId;
@@ -301,7 +431,12 @@ function loadAllData() {
         appData.currentKeyringId = currentKeyring.id;
     }
 
+    if(!currentKeyring.design) {
+        currentKeyring.design = "glass";
+    }
+
     renderCurrentKeyring(currentKeyring);
+    applyKeyringDesign();
 }
 
 //현재 키링 정보 렌더링
@@ -386,9 +521,17 @@ function updateBodyData() {
 function deleteEmoji() {
     if(selectedBody) {
         totalAmount -= selectedBody.myData.price;
+
+        const currentKeyring = appData.keyrings.find(k=>k.id === appData.currentKeyringId);
+        if(currentKeyring && currentKeyring.items){
+            currentKeyring.items = currentKeyring.items.filter(item => item.id !== selectedBody.myData.id);
+        }
+
         Composite.remove(engine.world, selectedBody);
         updateGoal();
+        saveAllData();
         closeModal();
+        selectedBody = null;
     }
 }
 
@@ -473,7 +616,15 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 //휴대폰 기울기 이벤트
+let sensorCount = 0;
+const STABILIZE_THRESHOLD = 5;
+
 window.addEventListener('deviceorientation', (event) => {
+    if(sensorCount < STABILIZE_THRESHOLD) {
+        sensorCount++;
+        return;
+    }
+
     let tiltX = event.gamma || 0; 
     let tiltY = event.beta || 0;
 
@@ -485,6 +636,8 @@ window.addEventListener('deviceorientation', (event) => {
 
     const hlX = 35 + (offsetX * 30);
     const hlY = 30 + (offsetY * 30);
+    const sideX = -offsetX * 20;
+    const sideY = -offsetY * 20;
     
     const angle = Math.atan2(offsetY, offsetX);
     const distance = Math.min(1, Math.hypot(offsetX, offsetY));
@@ -494,32 +647,116 @@ window.addEventListener('deviceorientation', (event) => {
     const antiShadowX = (-shadowX * 0.6).toFixed(2);
     const antiShadowY = (-shadowY * 0.6).toFixed(2);
 
-    const rotateX = (-offsetY * 12).toFixed(2);
-    const rotateY = (offsetX * 12).toFixed(2);
+    keyringRotation.x = (-offsetY * 15).toFixed(2);
+    keyringRotation.y = (offsetX * 15).toFixed(2);
+
+    const tiltAmount = Math.min(
+        1,
+        Math.hypot(offsetX, offsetY)
+    );
+
+    keyringRotation.scale =
+        (1 + tiltAmount * 0.015).toFixed(3);
+
 
     const keyringBox = document.getElementById('keyring-box');
-    if (keyringBox) {
-        keyringBox.style.backgroundImage = `radial-gradient(circle at 
-            ${hlX.toFixed(2)}% ${hlY.toFixed(2)}%, 
-            rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.35) 35%, rgba(255,255,255,0) 70%)
-        `;
-        keyringBox.style.boxShadow = `
-            inset ${shadowX}px ${shadowY}px 30px rgba(0, 0, 0, 0.22),
-            inset ${antiShadowX}px ${antiShadowY}px 15px rgba(255, 255, 255, 0.6),
-            0 ${15 + offsetY * 8}px ${30 + Math.abs(offsetX)*8}px rgba(0, 0, 0, 0.18)
+    if(!keyringBox) return;
+
+        const style =
+        getComputedStyle(keyringBox);
+
+        const highlightColor =
+            style.getPropertyValue('--highlight-color').trim()
+            || "rgba(255,255,255,.95)";
+
+        const highlightSoft =
+            style.getPropertyValue('--highlight-soft').trim()
+            || "rgba(255,255,255,.35)";
+
+        const shadowColor =
+            style.getPropertyValue('--shadow-color').trim()
+            || "rgba(0,0,0,.22)";
+
+        const shadowLight =
+            style.getPropertyValue('--shadow-light').trim()
+            || "rgba(255,255,255,.6)";
+
+        const highlight =
+            document.getElementById(
+                "keyring-highlight"
+            );
+
+        if(highlight){
+
+            highlight.style.backgroundImage = `
+                radial-gradient(
+                    circle at
+                    ${50 + sideX}%
+                    ${50 + sideY}%,
+                    ${highlightColor},
+                    ${highlightSoft} 35%,
+                    transparent 70%
+                )
+            `;
+        }
+
+        const shadowLayer =
+            document.getElementById(
+                "keyring-shadow"
+            );
+
+        if(shadowLayer){
+
+            shadowLayer.style.boxShadow = `
+
+                inset ${shadowX}px ${shadowY}px 30px
+                ${shadowColor},
+
+                inset ${antiShadowX}px ${antiShadowY}px 15px
+                ${shadowLight}
+
+            `;
+        }
+
+        const side =
+            document.getElementById(
+                "keyring-side"
+            );
+
+        if(side){
+
+            const edgeColor =
+                style.getPropertyValue('--edge-color')
+                || "rgba(0,0,0,.25)";
+
+
+            side.style.background = `
+                radial-gradient(
+                    circle at
+                    ${50 + sideX}%
+                    ${50 + sideY}%,
+                    transparent 40%,
+                    ${edgeColor} 100%
+                )
+            `;
+        }
+
+        keyringBox.style.transform = `
+            perspective(1000px)
+            rotateX(${keyringRotation.x}deg)
+            rotateY(${keyringRotation.y}deg)
+            scale(${keyringRotation.scale})
         `;
 
-        keyringBox.style.transform = `perspective(1000px)
-            rotateX(${rotateX}deg)
-            rotateY(${rotateY}deg)
-            scale(1.02)
-        `;
-    }
+        if(typeof engine !== 'undefined' && engine){
 
-    if (typeof engine !== 'undefined' && engine) {
-        engine.world.gravity.x = tiltX / 30;
-        engine.world.gravity.y = tiltY / 30;
-    }
+            engine.world.gravity.x =
+                tiltX / 30;
+
+            engine.world.gravity.y =
+                tiltY / 30;
+        }
+
 });
 
 // 마우스 기울기
@@ -542,6 +779,9 @@ document.addEventListener('mousemove', (e) => {
 
     const hlX = 35 + (offsetX * 30);
     const hlY = 30 + (offsetY * 30);
+    const sideX = -offsetX * 20;
+    const sideY = -offsetY * 20;
+
     
     const angle = Math.atan2(offsetY, offsetX);
     const distance = Math.min(1, Math.hypot(offsetX, offsetY));
@@ -554,29 +794,72 @@ document.addEventListener('mousemove', (e) => {
     const isInside = e.clientX >= rect.left && e.clientX <= rect.right &&
                     e.clientY >= rect.top && e.clientY <= rect.bottom;
     
-    const rotateX = (isInside ? -offsetY * 4 : -offsetY * 12).toFixed(2);
-    const rotateY = (isInside ? offsetX * 4 : offsetX * 12).toFixed(2);
-    const scale = isInside ? 1.01 : 1.02;
+    keyringRotation.x = (isInside ? -offsetY * 15 : -offsetY * 20).toFixed(2);
+    keyringRotation.y = (isInside ? offsetX * 15 : offsetX * 20).toFixed(2);
+    const tiltAmount = Math.min(
+        1,
+        Math.hypot(offsetX, offsetY)
+    );
 
-    keyringBox.style.backgroundImage = `radial-gradient(circle at 
-        ${hlX.toFixed(2)}% 
-        ${hlY.toFixed(2)}%
-        , rgba(255,255,255,0.95) 0%
-        , rgba(255,255,255,0.35) 35%
-        , rgba(255,255,255,0) 70%)`;
+    keyringRotation.scale =
+        (1 + tiltAmount * 0.015).toFixed(3);
 
-    keyringBox.style.boxShadow = `
-        inset ${shadowX}px ${shadowY}px 30px rgba(0, 0, 0, 0.22),
-        inset ${antiShadowX}px ${antiShadowY}px 15px rgba(255, 255, 255, 0.6),
-        0 ${15 + offsetY * 8}px ${30 + Math.abs(offsetX)*8}px rgba(0, 0, 0, 0.18)
+    const style = getComputedStyle(keyringBox);
+
+    const highlightColor =
+        style.getPropertyValue('--highlight-color').trim()
+        || "rgba(255,255,255,.95)";
+
+    const highlightSoft =
+        style.getPropertyValue('--highlight-soft').trim()
+        || "rgba(255,255,255,.35)";
+
+    const shadowColor =
+        style.getPropertyValue('--shadow-color').trim()
+        || "rgba(0,0,0,.22)";
+
+    const shadowLight =
+        style.getPropertyValue('--shadow-light').trim()
+        || "rgba(255,255,255,.6)";
+
+    const highlight = document.getElementById("keyring-highlight");
+
+    const side =
+    document.getElementById("keyring-side");
+
+    highlight.style.backgroundImage = `
+        radial-gradient(
+            circle at 
+            ${50 + sideX}%
+            ${50 + sideY}%,
+            ${highlightColor},
+            ${highlightColor} 35%,
+            transparent 70%
+        )
+    `;
+
+    const shadowLayer =
+        document.getElementById("keyring-shadow");
+
+    const edgeColor =
+    style.getPropertyValue('--edge-color').trim()
+    || "rgba(0,0,0,.25)";
+
+    shadowLayer.style.boxShadow = `
+
+        inset ${shadowX}px ${shadowY}px 30px
+        ${shadowColor},
+
+        inset ${antiShadowX}px ${antiShadowY}px 15px
+        ${shadowLight}
+
     `;
 
     keyringBox.style.transform = `perspective(1000px) 
-        rotateX(${rotateX}deg) 
-        rotateY(${rotateY}deg) 
-        scale(${scale})
+        rotateX(${keyringRotation.x}deg) 
+        rotateY(${keyringRotation.y}deg) 
+        scale(${keyringRotation.scale})
     `;
-
 
 });
 

@@ -13,7 +13,9 @@
     <div id="header-top">
         <input type="text" id ="current-keyring-title"
         oninput="updateBodyData()">
-        <button onclick="openStickerMenu()">☰</button>
+        <div class="header-buttons">
+            <button onclick="openStickerMenu()">☰</button>
+        </div>
     </div>
 
     <div id="goal-container">
@@ -46,7 +48,11 @@
 
    
     <div id="keyring-box">
+        <div id="keyring-side"></div>
+        <div id="keyring-shadow"></div>
         <canvas id="world"></canvas>
+        <div id="keyring-highlight"></div>
+        
     </div>
 
     <div class="input-container">
@@ -68,6 +74,21 @@
             <button onclick="closeModal()">닫기</button>
         </div>
     </div>
+
+    <!--디자인 보기 모달-->
+    <div id="design-menu-modal" class="modal" style="display:none;">
+        <div class="modal-menu">
+
+            <h3>키링 디자인</h3>
+
+            <div id="design-grid" class="design-grid">
+            </div>
+
+            <button class="close-btn" onclick="closeDesignMenu()">닫기</button>
+
+        </div>
+    </div>
+
 </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>    
     <script src="script.js"></script>

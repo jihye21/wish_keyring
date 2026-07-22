@@ -225,6 +225,23 @@ body {
     word-break: break-all;
 }
 
+/* 메뉴 - 디자인 버튼*/
+.keyring-actions{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+}
+
+.keyring-actions button{
+    flex:1;
+}
+
+.keyring-actions button:last-child{
+    flex:0;
+    width:42px;
+}
+/********************/
+
 .create-keyring-box {
     display: flex;
     flex-direction: column;
@@ -255,6 +272,7 @@ body {
     border-radius: 50%;
     
     position: relative;
+    isolation:isolate;
     overflow: hidden;
 
     background: transparent;
@@ -271,6 +289,259 @@ body {
     margin-bottom: auto;
 }
 
+/* 키링 디자인 */ 
+#keyring-box{
+    width:min(72vw,35dvh);
+    max-width:280px;
+    aspect-ratio:1;
+
+    border-radius:50%;
+    overflow:hidden;
+
+    position:relative;
+
+    transition:.25s;
+}
+
+#keyring-highlight{
+
+    position:absolute;
+    inset:0;
+
+    pointer-events:none;
+
+    border-radius:inherit;
+
+    opacity:.45;
+
+    mix-blend-mode:soft-light;
+
+    z-index:5;
+}
+
+#keyring-box{
+    --light-shadow-x:0px;
+    --light-shadow-y:0px;
+
+    box-shadow:
+        var(--design-shadow),
+        inset var(--light-shadow-x)
+        var(--light-shadow-y)
+        30px rgba(0,0,0,.22);
+
+    transition:
+        transform .15s ease,
+        box-shadow .15s ease;
+}
+
+#keyring-shadow{
+
+    position:absolute;
+
+    inset:0;
+
+    width:100%;
+    height:100%;
+
+    border-radius:inherit;
+
+    pointer-events:none;
+
+    z-index:3;
+
+}
+
+/* ===== Glass ===== */
+
+#keyring-box.glass,
+.design-preview.glass{
+    background:
+        radial-gradient(circle at 30% 30%, rgba(255,255,255,.8), transparent 45%),
+        linear-gradient(135deg, rgba(255,255,255,.35), rgba(255,255,255,.08));
+
+    border:2px solid rgba(255,255,255,.55);
+
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+
+    --design-shadow:
+        0 18px 35px rgba(0,0,0,.18),
+        inset 0 5px 12px rgba(255,255,255,.9),
+        inset 0 -8px 15px rgba(0,0,0,.08);
+
+    --highlight-color: rgba(255,255,255,.95);
+    --highlight-soft: rgba(255,255,255,.35);
+
+    --shadow-color: rgba(0,0,0,.22);
+    --shadow-light: rgba(255,255,255,.6);
+
+    --edge-color:
+        rgba(255,255,255,.35);
+}
+
+
+/* ===== Pastel ===== */
+#keyring-box.pastel,
+.design-preview.pastel{
+    background:
+        linear-gradient(135deg,
+        #ffd6e8 0%,
+        #ffeec5 35%,
+        #d8f8ff 70%,
+        #e8d8ff 100%);
+
+    border:4px solid rgba(255,255,255,.95);
+
+    --design-shadow:
+        0 15px 30px rgba(255,160,210,.35),
+        inset 0 4px 10px rgba(255,255,255,.8),
+        inset 0 -6px 12px rgba(180,140,180,.18);
+
+    --highlight-color: rgba(255,240,250,.95);
+    --highlight-soft: rgba(255,220,240,.45);
+
+    --shadow-color: rgba(220,150,190,.28);
+    --shadow-light: rgba(255,255,255,.75);
+}
+
+
+/* ===== Neon ===== */
+
+#keyring-box.neon,
+.design-preview.neon{
+    background:
+        radial-gradient(circle,#222 0%,#111 100%);
+
+    border:3px solid #00f5ff;
+
+    --design-shadow:
+        0 0 8px #00f5ff,
+        0 0 22px rgba(0,245,255,.9),
+        0 0 45px rgba(0,245,255,.5),
+        inset 0 0 20px rgba(0,245,255,.35);
+
+    --highlight-color: rgba(0,255,255,.95);
+    --highlight-soft: rgba(0,200,255,.45);
+
+    --shadow-color: rgba(0,255,255,.45);
+    --shadow-light: rgba(255,255,255,.3);
+}
+
+
+/* ===== Wood ===== */
+
+#keyring-box.wood,
+.design-preview.wood{
+    background:
+        repeating-linear-gradient(
+            90deg,
+            #d49b61 0px,
+            #c98d53 7px,
+            #b87740 14px,
+            #a96837 20px
+        );
+
+    border:5px solid #6b4226;
+
+    --design-shadow:
+        0 15px 25px rgba(80,45,20,.35),
+        inset 0 4px 8px rgba(255,255,255,.25),
+        inset 0 -8px 15px rgba(50,20,0,.25);
+
+    --highlight-color: rgba(255,220,160,.8);
+    --highlight-soft: rgba(255,190,120,.3);
+
+    --shadow-color: rgba(80,40,10,.45);
+    --shadow-light: rgba(255,240,200,.35);
+}
+
+
+/* ===== Metal ===== */
+
+#keyring-box.metal,
+.design-preview.metal{
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff 0%,
+            #e8e8e8 20%,
+            #c9c9c9 45%,
+            #fdfdfd 70%,
+            #bcbcbc 100%
+        );
+
+    border:3px solid #8a8a8a;
+
+    --design-shadow:
+        0 15px 30px rgba(0,0,0,.35),
+        inset 0 5px 10px rgba(255,255,255,.9),
+        inset 0 -8px 12px rgba(0,0,0,.25);
+
+    --highlight-color: rgba(255,255,255,.95);
+    --highlight-soft: rgba(220,230,255,.5);
+
+    --shadow-color: rgba(0,0,0,.35);
+    --shadow-light: rgba(255,255,255,.9);
+
+    --edge-color:
+        rgba(0,0,0,.35);
+}
+
+
+.design-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(90px,1fr));
+    gap:16px;
+    margin-top:20px;
+}
+
+.design-card{
+    cursor:pointer;
+    text-align:center;
+}
+
+.design-preview{
+    width:72px;
+    height:72px;
+
+    border-radius:50%;
+
+    margin:0 auto 10px;
+
+    transition:.2s;
+
+    position:relative;
+}
+
+.design-preview:hover{
+    transform:scale(1.08);
+}
+
+.design-card:hover .design-preview{
+    transform:scale(1.08);
+}
+
+.design-card.selected .design-preview{
+    outline:4px solid #4f8cff;
+    outline-offset:4px;
+}
+
+#keyring-side{
+
+    position:absolute;
+
+    inset:0;
+
+    border-radius:inherit;
+
+    pointer-events:none;
+
+    z-index:3;
+
+    opacity:.8;
+
+}
+
 #keyring-box::before {
     content: '';
     position: absolute;
@@ -280,9 +551,9 @@ body {
     height: 100%;
     background: radial-gradient(circle at 35% 30%, 
         rgba(255,255,255,0.8) 0%, 
-        rgba(255,255,255,0.3) 30%
+        rgba(255,255,255,0.3) 30%,
         rgba(255, 255, 255, 0) 60%);
-    z-index: 3;
+    z-index: 2;
     pointer-events: none;
     transition: background 0.1s ease-out;
 }
@@ -293,7 +564,7 @@ body {
     left: 0;
     width: 100% !important;
     height: 100% !important;
-    z-index: 2;
+    z-index: 4;
     opacity: 0.85;
     filter: brightness(1.1) contrast(1.1);
     pointer-events: auto;
@@ -305,8 +576,8 @@ body {
     left: 0;
     width: 100% !important;
     height: 100% !important;
-    z-index: 1;
     pointer-events: auto;
+    z-index:1;
 }
 
 .input-group {
