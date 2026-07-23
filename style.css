@@ -314,7 +314,7 @@ body {
 
     opacity:.45;
 
-    mix-blend-mode:soft-light;
+    mix-blend-mode: overlay;
 
     z-index:5;
 }
@@ -540,6 +540,9 @@ body {
 
     opacity:.8;
 
+    background: inherit;
+    filter: brightness(0.7);
+    scale: 1.05;
 }
 
 #keyring-box::before {

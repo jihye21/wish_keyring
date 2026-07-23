@@ -41,6 +41,12 @@ const designs = [
     }
 ];
 
+const shapes = [
+    { id: "default", name: "Square" },
+    { id: "bear", name: "Bear" },
+    { id: "cloud", name: "Cloud" }
+];
+
 let keyringRotation = {
     x:0,
     y:0,
@@ -619,20 +625,43 @@ window.addEventListener('DOMContentLoaded', () => {
 let sensorCount = 0;
 const STABILIZE_THRESHOLD = 5;
 
+function getScreenAngle(){
+    if(window.screen && window.screen.orientation){
+        return window.screen.orientation.angle;
+    }
+    return window.orientation || 0;
+}
+
 window.addEventListener('deviceorientation', (event) => {
     if(sensorCount < STABILIZE_THRESHOLD) {
         sensorCount++;
         return;
     }
 
-    let tiltX = event.gamma || 0; 
-    let tiltY = event.beta || 0;
+    let beta = event.gamma || 0; 
+    let gamma = event.beta || 0;
 
-    tiltX = Math.max(-45, Math.min(45, tiltX));
-    tiltY = Math.max(-45, Math.min(45, tiltY));
+    const screenAngle = getScreenAngle();
+    let adjustedBeta = beta;
+    let adjustedGamma = gamma;
 
-    const offsetX = tiltX / 45;
-    const offsetY = tiltY / 45;
+    if(screenAngle === 90) {
+        adjustedBeta = - gamma;
+        adjustedGamma = beta;
+    } else if (screenAngle === -90 || screenAngle === 270) {
+        adjustedBeta = gamma;
+        adjustedGamma = -gamma;
+    }
+
+    const baseTilt = 45;
+    let tiltX = adjustedBeta - baseTilt;
+    let tiltY = adjustedGamma;
+
+    tiltX = Math.max(-30, Math.min(30, tiltX));
+    tiltY = Math.max(-30, Math.min(30, tiltY));
+
+    const offsetX = tiltX / 30;
+    const offsetY = tiltY / 30;
 
     const hlX = 35 + (offsetX * 30);
     const hlY = 30 + (offsetY * 30);
@@ -691,8 +720,8 @@ window.addEventListener('deviceorientation', (event) => {
             highlight.style.backgroundImage = `
                 radial-gradient(
                     circle at
-                    ${50 + sideX}%
-                    ${50 + sideY}%,
+                    ${hlX}%
+                    ${hlY}%,
                     ${highlightColor},
                     ${highlightSoft} 35%,
                     transparent 70%
@@ -724,6 +753,8 @@ window.addEventListener('deviceorientation', (event) => {
             );
 
         if(side){
+            const moveX = (sideX * 0.3).toFixed(2);
+            const moveY = (sideY * 0.3).toFixed(2);
 
             const edgeColor =
                 style.getPropertyValue('--edge-color')
@@ -733,8 +764,8 @@ window.addEventListener('deviceorientation', (event) => {
             side.style.background = `
                 radial-gradient(
                     circle at
-                    ${50 + sideX}%
-                    ${50 + sideY}%,
+                    ${moveX}%
+                    ${moveY}%,
                     transparent 40%,
                     ${edgeColor} 100%
                 )
@@ -824,36 +855,58 @@ document.addEventListener('mousemove', (e) => {
 
     const highlight = document.getElementById("keyring-highlight");
 
-    const side =
-    document.getElementById("keyring-side");
-
-    highlight.style.backgroundImage = `
-        radial-gradient(
-            circle at 
-            ${50 + sideX}%
-            ${50 + sideY}%,
-            ${highlightColor},
-            ${highlightColor} 35%,
-            transparent 70%
-        )
-    `;
+    if(highlight){
+        highlight.style.backgroundImage = `
+            radial-gradient(
+                circle at 
+                ${hlX}%
+                ${hlY}%,
+                ${highlightColor},
+                ${highlightSoft} 35%,
+                transparent 70%
+            )
+        `;
+    }
 
     const shadowLayer =
         document.getElementById("keyring-shadow");
 
-    const edgeColor =
-    style.getPropertyValue('--edge-color').trim()
-    || "rgba(0,0,0,.25)";
+    if(shadowColor){
+        shadowLayer.style.boxShadow = `
 
-    shadowLayer.style.boxShadow = `
+            inset ${shadowX}px ${shadowY}px 30px
+            ${shadowColor},
 
-        inset ${shadowX}px ${shadowY}px 30px
-        ${shadowColor},
+            inset ${antiShadowX}px ${antiShadowY}px 15px
+            ${shadowLight}
 
-        inset ${antiShadowX}px ${antiShadowY}px 15px
-        ${shadowLight}
+        `;
+    }
 
-    `;
+    const side =
+        document.getElementById(
+            "keyring-side"
+        );
+
+    if(side){
+        const moveX = (sideX * 0.3).toFixed(2);
+        const moveY = (sideY * 0.3).toFixed(2);
+
+        const edgeColor =
+            style.getPropertyValue('--edge-color')
+            || "rgba(0,0,0,.25)";
+
+
+        side.style.background = `
+            radial-gradient(
+                circle at
+                ${moveX}%
+                ${moveY}%,
+                transparent 40%,
+                ${edgeColor} 100%
+            )
+        `;
+    }
 
     keyringBox.style.transform = `perspective(1000px) 
         rotateX(${keyringRotation.x}deg) 
