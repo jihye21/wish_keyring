@@ -120,6 +120,7 @@ body {
     align-items: center; 
     justify-content: center; 
     z-index: 9999;
+    backdrop-filter: blur(3px);
 }
 
 .modal-content { 
@@ -175,7 +176,7 @@ body {
 .sticker-card {
     background: #fff;
     border: 2px dashed #d1b3ff;
-    padding: 12px;
+    padding: 20px 16px;
     border-radius: 15px;
     text-align: center;
     display: flex;
@@ -240,6 +241,106 @@ body {
     flex:0;
     width:42px;
 }
+
+#design-grid {
+    max-height: 380px;
+    padding-right: 4px;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+    margin-bottom: 16px;
+}
+
+.menu-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.column-header-box h4 {
+    margin: 0 0 4px 0;
+    font-size: 15px;
+    color: #4b5563;
+    font-weight: 600;
+    text-align: left;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 6px;
+}
+
+.design-card {
+    position: relative;
+    background: #ffffff;
+    border: 2px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 16px 12px;
+    text-align: center;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    cursor: pointer;
+}
+
+.design-card.active {
+    border-color: #6a6a9d;
+    background: #f5f3ff;
+}
+
+.design-preview {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 8px;
+    position: relative;
+    flex-shrink: 0;
+    transform: perspective(200px) rotateX(10.3deg) rotateY(-20deg) scale(1);
+    transform-style: preserve-3d;
+    transition: transform 0.2s;
+}
+.design-card:hover .design-preview {
+    transform: perspective(200px) rotateX(12deg) rotateY(-25deg) scale(1.05);
+}
+
+.keyring-mini-side, .keyring-mini-shadow, .keyring-mini-highlight {
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    clip-path: inherit; pointer-events: none;
+}
+
+.keyring-mini-side { background: radial-gradient(circle at 6% 3.09%, transparent 40%, rgba(255, 255, 255, 0.25) 100%); z-index: 2; }
+.keyring-mini-shadow { box-shadow: rgba(0, 0, 0, 0.15) 3px 2px 6px inset, rgba(255, 255, 255, 0.4) -2px -1px 3px inset; z-index: 3; }
+.keyring-mini-highlight { background-image: radial-gradient(circle at 5% 14.5529%, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.25) 35%, transparent 70%); z-index: 4; }
+
+.design-card-name {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.design-card.active .design-card-name {
+    color: #6a6a9d;
+}
+
+/* 스티커 카드 하단 액션 버튼 스타일 이식 */
+.design-card .keyring-actions {
+    display: flex;
+    width: 100%;
+}
+
+/* 선택되어 활성화된 상태의 하단 버튼 반전 효과 */
+.design-card.active {
+    background: #ffffff;
+    border-color: #6a6a9d;
+}
 /********************/
 
 .create-keyring-box {
@@ -269,8 +370,6 @@ body {
 
     background: rgba(255, 255, 255, 0.3);
     
-    border-radius: 50%;
-    
     position: relative;
     isolation:isolate;
     overflow: hidden;
@@ -295,7 +394,6 @@ body {
     max-width:280px;
     aspect-ratio:1;
 
-    border-radius:50%;
     overflow:hidden;
 
     position:relative;
@@ -487,6 +585,19 @@ body {
         rgba(0,0,0,.35);
 }
 
+/* 형태 */
+.shape-bear {
+    clip-path: url(#bear-clip);
+}
+
+.shape-cloud {
+    clip-path: url(#cloud-clip);
+}
+
+.shape-default {
+    clip-path: none;
+    border-radius: 50%;
+}
 
 .design-grid{
     display:grid;
@@ -501,6 +612,7 @@ body {
 }
 
 .design-preview{
+    background-color: #ddd;
     width:72px;
     height:72px;
 
@@ -509,7 +621,7 @@ body {
     margin:0 auto 10px;
 
     transition:.2s;
-
+    overflow: hidden;  
     position:relative;
 }
 

@@ -18,7 +18,7 @@ const render = Render.create({
     }
 });
 
-const designs = [
+const materials = [
     {
         id: "glass",
         name: "Glass"
@@ -42,7 +42,7 @@ const designs = [
 ];
 
 const shapes = [
-    { id: "default", name: "Square" },
+    { id: "default", name: "Cicle" },
     { id: "bear", name: "Bear" },
     { id: "cloud", name: "Cloud" }
 ];
@@ -251,39 +251,74 @@ function renderDesignMenu(){
 
     grid.innerHTML="";
 
-    designs.forEach(design=>{
+    /* shape 메뉴 */
+    const leftCol = document.createElement("div");
+    leftCol.className = "menu-column";
 
-        const card=document.createElement("div");
+    const shapeHead = document.createElement("div");
+    shapeHead.className = "column-header-box";
+    shapeHead.innerHTML = `<h4>Shapes</h4>`;
+    leftCol.appendChild(shapeHead);
 
-        card.className="design-card";
+    shapes.forEach(sh => {
+        const card = document.createElement("div");
+        const keyring = appData.keyrings.find(k=>k.id === editingDesignKeyringId);
+        const isActive = keyring && keyring.shape === sh.id;
 
-        card.innerHTML=`
-            <div class="design-preview ${design.id}"></div>
-            <p>${design.name}</p>
+        card.className = `design-card ${isActive ? 'active': ''}`;
+        card.innerHTML = `
+            <div class ="design-preview shape-${sh.id}">
+                <div class="keyring-mini-side"></div>
+                <div class="keyring-mini-shadow"></div>
+                <div class="keyring-mini-highlight"></div>
+            </div>
+            <p class="design-card-name">${sh.name}</p>
         `;
-
-        card.onclick=()=>{
-
-            const keyring = appData.keyrings.find(
-                k => k.id === editingDesignKeyringId
-            );
-
-            keyring.design = design.id;
-
-            if (keyring.id === appData.currentKeyringId) {
-                applyKeyringDesign();
+        card.onclick = () => {
+            if(keyring) {
+                keyring.shape = sh.id;
+                if(keyring.id === appData.currentKeyringId) applyKeyringDesign();
+                saveAllData();
+                renderDesignMenu();
             }
-            console.log(appData.keyrings);
-
-            saveAllData();
-            closeDesignMenu();
-            renderStickerBoard();
         };
-
-        grid.appendChild(card);
-
+        leftCol.appendChild(card);
     });
+    grid.appendChild(leftCol);
 
+    /* material 메뉴 */
+    const rightCol = document.createElement("div");
+    rightCol.className = "menu-column";
+
+    const matHead = document.createElement("div");
+    matHead.className = "column-header-box";
+    matHead.innerHTML = `<h4>Materials</h4>`;
+    rightCol.appendChild(matHead);
+
+    materials.forEach(mat => {
+        const card = document.createElement("div");
+        const keyring = appData.keyrings.find(k=>k.id === editingDesignKeyringId);
+        const isActive = keyring && keyring.material === mat.id;
+        card.className = `design-card ${isActive ? 'active' : ''}`;
+        card.innerHTML = `
+            <div class ="design-preview ${mat.id} shape-default">
+                <div class="keyring-mini-side"></div>
+                <div class="keyring-mini-shadow"></div>
+                <div class="keyring-mini-highlight"></div>
+            </div>
+            <p class="design-card-name">${mat.name}</p>
+        `;
+        card.onclick = () =>{
+            if(keyring) {
+                keyring.material = mat.id;
+                if(keyring.id === appData.currentKeyringId) applyKeyringDesign();
+                saveAllData();
+                renderDesignMenu();
+            }
+        };
+        rightCol.appendChild(card);
+    });
+    grid.appendChild(rightCol);
 }
 
 //디자인 적용 함수
@@ -298,9 +333,14 @@ function applyKeyringDesign(){
 
     const box = document.getElementById("keyring-box");
 
-    box.className = "";
-    box.classList.add(keyring?.design || "glass");
+    const currentKeyring = appData.keyrings.find(k => k.id === appData.currentKeyringId);
 
+    box.className = "";
+    const materialClass = currentKeyring.material || "wood";
+    const shapeClass = currentKeyring.shape ? `shape-${currentKeyring.shape}` : 
+        "shape-default";
+
+   box.classList.add(materialClass, shapeClass);
     box.style.transform = `
         perspective(1000px)
         rotateX(${keyringRotation.x}deg)
@@ -383,7 +423,8 @@ function createNewKeyring() {
         id: 'keyring_' + crypto.randomUUID(),
         title: title,
         goalAmount: goalAmount,
-        design: "glass",
+        material: "glass",
+        shape: "default",
         items: []
     };
 
@@ -425,7 +466,8 @@ function loadAllData() {
             id: defaultId,
             title: 'Wish Keyring',
             goalAmount: 10000,
-            design: "glass",
+            material: "glass",
+            shape: "default",
             items: []
         }];
         appData.currentKeyringId = defaultId;
@@ -437,8 +479,12 @@ function loadAllData() {
         appData.currentKeyringId = currentKeyring.id;
     }
 
-    if(!currentKeyring.design) {
-        currentKeyring.design = "glass";
+    if(!currentKeyring.material) {
+        currentKeyring.material = "glass";
+    }
+
+    if(!currentKeyring.shape) {
+        currentKeyring.shape = "default";
     }
 
     renderCurrentKeyring(currentKeyring);
@@ -808,8 +854,8 @@ document.addEventListener('mousemove', (e) => {
     const offsetX = Math.max(-1, Math.min(1, (e.clientX - boxCenterX) / maxRange));
     const offsetY = Math.max(-1, Math.min(1, (e.clientY - boxCenterY) /maxRange));
 
-    const hlX = 35 + (offsetX * 30);
-    const hlY = 30 + (offsetY * 30);
+    const hlX = 50 + (offsetX * 20);
+    const hlY = 50 + (offsetY * 20);
     const sideX = -offsetX * 20;
     const sideY = -offsetY * 20;
 
@@ -817,16 +863,16 @@ document.addEventListener('mousemove', (e) => {
     const angle = Math.atan2(offsetY, offsetX);
     const distance = Math.min(1, Math.hypot(offsetX, offsetY));
 
-    const shadowX = (-Math.cos(angle) * distance * 20).toFixed(2);
-    const shadowY = (-Math.sin(angle) * distance * 20).toFixed(2);
-    const antiShadowX = (-shadowX * 0.6).toFixed(2);
-    const antiShadowY = (-shadowY * 0.6).toFixed(2);
+    const shadowX = (-Math.cos(angle) * distance * 12).toFixed(2);
+    const shadowY = (-Math.sin(angle) * distance * 12).toFixed(2);
+    const antiShadowX = (-shadowX * 0.7).toFixed(2);
+    const antiShadowY = (-shadowY * 0.7).toFixed(2);
 
     const isInside = e.clientX >= rect.left && e.clientX <= rect.right &&
                     e.clientY >= rect.top && e.clientY <= rect.bottom;
     
-    keyringRotation.x = (isInside ? -offsetY * 15 : -offsetY * 20).toFixed(2);
-    keyringRotation.y = (isInside ? offsetX * 15 : offsetX * 20).toFixed(2);
+    keyringRotation.x = (isInside ? -offsetY * 13 : -offsetY * 18).toFixed(2);
+    keyringRotation.y = (isInside ? offsetX * 13 : offsetX * 18).toFixed(2);
     const tiltAmount = Math.min(
         1,
         Math.hypot(offsetX, offsetY)
@@ -871,7 +917,7 @@ document.addEventListener('mousemove', (e) => {
     const shadowLayer =
         document.getElementById("keyring-shadow");
 
-    if(shadowColor){
+    if(shadowLayer){
         shadowLayer.style.boxShadow = `
 
             inset ${shadowX}px ${shadowY}px 30px
